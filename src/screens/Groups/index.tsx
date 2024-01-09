@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { FlatList } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import { Header } from '@components/Header';
 import { Highlight } from '@components/Highlight';
 import { GroupCard } from '@components/GroupCard';
 import { ListEmpty } from '@components/ListEmpty';
+import { Button } from '@components/Button';
 
 import { Container } from './styles';
-import { Button } from '@components/Button';
 
 export function Groups() {
   const [teams, setTeams] = useState<string[]>([]);
+  const navigation = useNavigation();
+
+  function handleNewGroup() {
+    navigation.navigate('new');
+  }
 
   return (
     <Container>
@@ -26,9 +32,10 @@ export function Groups() {
         ListEmptyComponent={
           <ListEmpty message="Start by creating your first team!" />
         }
+        showsVerticalScrollIndicator={false}
       />
 
-      <Button title="Create a new team" />
+      <Button title="Create a new team" onPress={handleNewGroup} />
     </Container>
   );
 }
