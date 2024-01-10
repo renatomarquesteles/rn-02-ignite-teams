@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Alert, FlatList } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, FlatList, TextInput } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
 import { Header } from '@components/Header';
@@ -13,6 +13,7 @@ import { Button } from '@components/Button';
 import { playerAddByGroup } from '@storage/player/playerAddByGroup';
 import { PlayerStorageDTO } from '@storage/player/PlayerStorageDTO';
 import { playersGetByGroupAndTeam } from '@storage/player/playersGetByGroupAndTeam';
+import { playerRemoveByGroup } from '@storage/player/playerRemoveByGroup';
 import { AppError } from '@utils/AppError';
 
 import { Container, Form, HeaderList, PlayersCount } from './styles';
@@ -27,6 +28,7 @@ export function Players() {
   const [players, setPlayers] = useState<PlayerStorageDTO[]>([]);
   const route = useRoute();
   const { group } = route.params as RouteParams;
+  const newPlayerNameInputRef = useRef<TextInput>(null);
 
   async function handleAddPlayer() {
     if (newPlayerName.trim().length === 0) {
@@ -40,7 +42,9 @@ export function Players() {
 
     try {
       await playerAddByGroup(newPlayer, group);
-      await fetchPlayersByTeam();
+      fetchPlayersByTeam();
+      setNewPlayerName('');
+      newPlayerNameInputRef.current?.blur();
     } catch (error) {
       if (error instanceof AppError) {
         Alert.alert('New Player', error.message);
@@ -61,6 +65,16 @@ export function Players() {
     }
   }
 
+  async function handlePlayerRemove(playerName: string) {
+    try {
+      await playerRemoveByGroup(playerName, group);
+      fetchPlayersByTeam();
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Remove player', 'Cannot remove this player.');
+    }
+  }
+
   useEffect(() => {
     fetchPlayersByTeam();
   }, [team]);
@@ -73,10 +87,13 @@ export function Players() {
 
       <Form>
         <Input
-          placeholder="Player's nickname"
+          inputRef={newPlayerNameInputRef}
+          placeholder="Player nickname"
           autoCorrect={false}
           value={newPlayerName}
           onChangeText={setNewPlayerName}
+          onSubmitEditing={handleAddPlayer}
+          returnKeyType="done"
         />
 
         <ButtonIcon icon="add" onPress={handleAddPlayer} />
@@ -102,7 +119,10 @@ export function Players() {
         data={players}
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
-          <PlayerCard name={item.name} onRemove={() => {}} />
+          <PlayerCard
+            name={item.name}
+            onRemove={() => handlePlayerRemove(item.name)}
+          />
         )}
         ListEmptyComponent={() => (
           <ListEmpty message="There are no players on this team yet" />
