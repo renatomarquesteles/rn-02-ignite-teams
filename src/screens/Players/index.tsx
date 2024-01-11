@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, TextInput } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { Header } from '@components/Header';
 import { Highlight } from '@components/Highlight';
@@ -10,6 +10,7 @@ import { Filter } from '@components/Filter';
 import { PlayerCard } from '@components/PlayerCard';
 import { ListEmpty } from '@components/ListEmpty';
 import { Button } from '@components/Button';
+import { groupRemoveByName } from '@storage/group/groupRemoveByName';
 import { playerAddByGroup } from '@storage/player/playerAddByGroup';
 import { PlayerStorageDTO } from '@storage/player/PlayerStorageDTO';
 import { playersGetByGroupAndTeam } from '@storage/player/playersGetByGroupAndTeam';
@@ -29,6 +30,7 @@ export function Players() {
   const route = useRoute();
   const { group } = route.params as RouteParams;
   const newPlayerNameInputRef = useRef<TextInput>(null);
+  const navigation = useNavigation();
 
   async function handleAddPlayer() {
     if (newPlayerName.trim().length === 0) {
@@ -73,6 +75,23 @@ export function Players() {
       console.log(error);
       Alert.alert('Remove player', 'Cannot remove this player.');
     }
+  }
+
+  async function groupRemove() {
+    try {
+      await groupRemoveByName(group);
+      navigation.navigate('groups');
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Delete Team', 'Cannot delete this team.');
+    }
+  }
+
+  async function handleGroupRemove() {
+    Alert.alert('Delete Team', 'Would you like to delete this team?', [
+      { text: 'No', style: 'cancel' },
+      { text: 'Yes', onPress: () => groupRemove() },
+    ]);
   }
 
   useEffect(() => {
@@ -134,7 +153,11 @@ export function Players() {
         ]}
       />
 
-      <Button title="Delete Team" type="SECONDARY" />
+      <Button
+        title="Delete Team"
+        type="SECONDARY"
+        onPress={handleGroupRemove}
+      />
     </Container>
   );
 }
